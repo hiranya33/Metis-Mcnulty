@@ -1,0 +1,80 @@
+# Challenge Set 9
+## Part III: Soccer Data
+
+*Introductory - Intermediate level SQL*
+
+--
+
+Please complete this exercise using sqlite3 and Jupyter notebook.
+
+Download the [SQLite database](https://www.kaggle.com/hugomathien/soccer/downloads/soccer.zip) and load in your notebook using the sqlite3 library. 
+
+1. Which team scored the most points when playing at home?   
+sql_query = '''SELECT team_long_name,SUM(home_team_goal) AS Sum_goals_home FROM Match
+               JOIN Team ON Match.home_team_api_id=Team.team_api_id
+               GROUP BY home_team_api_id
+               ORDER BY Sum_goals_home DESC 
+               LIMIT 10
+               ;''
+
+
+2. Did this team also score the most points when playing away?  
+sql_query = '''SELECT team_long_name,SUM(away_team_goal) AS Sum_goals_away FROM Match
+               JOIN Team ON Match.away_team_api_id=Team.team_api_id
+               GROUP BY away_team_api_id
+               ORDER BY Sum_goals_away DESC 
+               LIMIT 10
+               ;'''
+
+
+
+3. How many matches resulted in a tie?   
+sql_query = '''SELECT COUNT(match_api_id) AS count_match FROM Match
+               
+               WHERE home_team_goal=away_team_goal
+               
+             
+               ;'''
+
+
+
+4. How many players have Smith for their last name? How many have 'smith' anywhere in their name?  
+A. sql_query = '''SELECT COUNT(*) AS no_players  FROM Player
+               
+               WHERE player_name  LIKE '% smith'
+             
+               LIMIT 5
+               ;'''
+
+pd.read_sql_query(sql_query, conn)
+B. sql_query = '''SELECT COUNT(player_name) AS no_players  FROM Player
+               
+               WHERE player_name  LIKE '%smith%'
+             
+             
+               ;'''
+pd.read_sql_query(sql_query, conn)
+
+5. What was the median tie score? Use the value determined in the previous question for the number of tie games. *Hint:* PostgreSQL does not have a median function. Instead, think about the steps required to calculate a median and use the [`WITH`](https://www.postgresql.org/docs/8.4/static/queries-with.html) command to store stepwise results as a table and then operate on these results.  
+
+sql_query = '''WITH tie_matches AS (SELECT *  FROM Match
+               
+                   WHERE home_team_goal=away_team_goal)  
+                   SELECT AVG(home_team_goal) AS median
+                   FROM (SELECT home_team_goal
+                   FROM tie_matches
+                   ORDER BY home_team_goal
+                   LIMIT 2 - (SELECT COUNT(*) FROM tie_matches) % 2    
+                   OFFSET (SELECT (COUNT(*) - 1) / 2
+                   FROM tie_matches)) ;'''
+
+pd.read_sql_query(sql_query, conn)
+
+6. What percentage of players prefer their left or right foot? *Hint:* Calculate either the right or left foot, whichever is easier based on how you setup the problem.   
+sql_query = '''SELECT ROUND(
+                100*(SUM(CASE WHEN preferred_foot ='right' THEN 1 ELSE 0 END)/COUNT(DISTINCT player_api_id)
+                ),1) AS left_count
+                FROM Player_Attributes
+             ;'''
+
+pd.read_sql_query(sql_query, conn)
