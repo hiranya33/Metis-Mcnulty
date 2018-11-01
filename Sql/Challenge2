@@ -1,1 +1,66 @@
+# Challenge Set 9
+## Part II: Baseball Data
+
+*Introductory - Intermediate level SQL*
+
+--
+
+Please complete this exercise via SQLalchemy and Jupyter notebook.
+
+We will be working with the Lahman baseball data we uploaded to your AWS instance in class. 
+
+
+1. What was the total spent on salaries by each team, each year?  
+sql_query = '''SELECT franchises.franchname,franchises.franchid,salaries.yearid,salaries.teamid,SUM(salaries.salary)AS Total_sal 
+               FROM salaries 
+               JOIN franchises
+               ON salaries.teamid=franchises.franchid
+               GROUP BY franchises.franchid,salaries.teamid,salaries.yearid
+               ORDER BY franchises.franchid,salaries.teamid,salaries.yearid
+               LIMIT 30
+               ;'''
+
+
+
+2. What is the first and last year played for each player? *Hint:* Create a new table from 'Fielding.csv'.  
+pd.read_sql_query('''SELECT playerid,MIN(yearid) AS Start_yr, MAX(yearid) AS\
+End_year FROM fielding GROUP BY playerid LIMIT 5;''', cnx)
+
+
+3. Who has played the most all star games?  
+sql_query = '''SELECT playerid, COUNT(gameid) AS gamecount
+               FROM allstarfull GROUP BY playerid
+               ORDER BY gamecount DESC
+               LIMIT 5
+                
+               ;'''
+
+
+4. Which school has generated the most distinct players? *Hint:* Create new table from 'CollegePlaying.csv'.  
+pd.read_sql_query('''SELECT * FROM mast LIMIT 5;''', cnx)
+
+5. Which players have the longest career? Assume that the `debut` and `finalGame` columns comprise the start and end, respectively, of a player's career. *Hint:* Create a new table from 'Master.csv'. Also note that strings can be converted to dates using the [`DATE`](https://wiki.postgresql.org/wiki/Working_with_Dates_and_Times_in_PostgreSQL#WORKING_with_DATETIME.2C_DATE.2C_and_INTERVAL_VALUES) function and can then be subtracted from each other yielding their difference in days.  
+sql_query = '''SELECT  playerid,finalgame,debut ,(finalgame-debut) AS career
+               FROM mast WHERE debut IS NOT NULL AND finalgame IS NOT NULL
+               GROUP BY playerid
+               ORDER BY career DESC
+               LIMIT 5
+                
+               ;'''
+
+6. What is the distribution of debut months? *Hint:* Look at the `DATE` and [`EXTRACT`](https://www.postgresql.org/docs/current/static/functions-datetime.html#FUNCTIONS-DATETIME-EXTRACT) functions.  
+sql_query = '''SELECT EXTRACT(MONTH FROM debut) AS month, COUNT(playerid) AS Debut_count FROM mast
+               WHERE debut IS NOT NULL
+               GROUP BY month
+               ORDER BY month;'''
+
+7. What is the effect of table join order on mean salary for the players listed in the main (master) table? *Hint:* Perform two different queries, one that joins on playerID in the salary table and other that joins on the same column in the master table. You will have to use left joins for each since right joins are not currently supported with SQLalchemy.  
+#q7
+sql_query = '''SELECT salaries.playerid,AVG(salaries.salary)  AS Avg_salary
+               FROM salaries
+               LEFT JOIN mast ON salaries.playerid=mast.playerid
+               GROUP BY salaries.playerid
+               ORDER BY salaries.playerid;'''
+
+pd.read_sql_query(sql_query, cnx)
 
